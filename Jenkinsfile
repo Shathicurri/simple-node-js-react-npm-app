@@ -9,22 +9,21 @@ pipeline {
         CI = 'true'
     }
     stages {
+        stage('Checkout SCM') {
+			steps {
+				git 'https://github.com/Shathicurri/simple-node-js-react-npm-app.git'
+			}
+		}
         stage('Build') {
             steps {
                 sh 'npm install'
             }
         }
-        stage('OWASP Dependency-Check Vulnerabilities') {
-            steps {
-            dependencyCheck additionalArguments: ''' 
-                        -o './'
-                        -s './'
-                        -f 'ALL' 
-                        --prettyPrint''', odcInstallation: 'OWASP Dependency-Check Vulnerabilities'
-
-                dependencyCheckPublisher pattern: 'dependency-check-report.xml'
-            }
-        }
+        stage('OWASP DependencyCheck') {
+			steps {
+				dependencyCheck additionalArguments: '--format HTML --format XML', odcInstallation: 'OWASP DependencyCheck'
+			}
+		}
         stage('Test') {
             steps {
                 sh './jenkins/scripts/test.sh'
@@ -38,4 +37,9 @@ pipeline {
             }
         }
     }
+    post {
+		success {
+			dependencyCheckPublisher pattern: 'dependency-check-report.xml'
+		}
+	}
 }
